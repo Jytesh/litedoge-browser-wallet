@@ -1,7 +1,10 @@
 import { getBalance, getUnspentTransactions, pushTransactionHex } from '../utils/walletProxy';
-import { lDogeDenominator, ldogeLocktime, ldogeVersion, minFee } from '../utils/Constants';
+import {
+  lDogeDenominator, ldogeLocktime, ldogeVersion, minFee, liteDogeNetwork,
+} from '../utils/Constants';
+// eslint-disable-next-line import/no-named-as-default
 import LitedogeBuilder from './lDogeBuilder';
-import { InsufficientLitedoge } from './Errors'
+import { InsufficientLitedoge } from './Errors';
 
 class Wallet {
   constructor(keyPair, address, wifData) {
@@ -21,6 +24,7 @@ class Wallet {
   get litedogeWifPrivateKey() {
     return this.pLiteDogeWif;
   }
+
   /**
    * @returns {ECPairInterface}
    */
@@ -32,15 +36,16 @@ class Wallet {
     return getBalance(this.litedogeAddress);
   }
 
-  unspentTransaction() {
+  unspentTransactions() {
     return getUnspentTransactions(this.litedogeAddress);
   }
+
   async createPayment(receiverAddress, amount) {
     const amountInSats = Math.floor(amount * lDogeDenominator);
     const amountAndFees = amountInSats + minFee;
     const signer = this.liteDogeKeyPair;
 
-    const unspentTransactions = this.getUnspentTransactions();
+    const unspentTransactions = await this.unspentTransactions();
     const referencedTransactions = [];
 
     let totalInputAmount = 0;
@@ -59,13 +64,13 @@ class Wallet {
     // Has enough LiteDoges
     if (returnToSenderAmount >= 0) {
       try {
-        const transactionBuilder = new LitedogeBuilder(this.janinService.litedogeCurrency.network);
+        const transactionBuilder = new LitedogeBuilder(liteDogeNetwork);
         transactionBuilder.setLockTime(ldogeLocktime);
         transactionBuilder.setTimeToCurrentTime();
         transactionBuilder.setVersion(ldogeVersion);
         transactionBuilder.setLowR(false);
         // Add sources from previous transactions hash
-        referencedTransactions.forEach(referencedTransaction => {
+        referencedTransactions.forEach((referencedTransaction) => {
           transactionBuilder.addInput(referencedTransaction.txid, referencedTransaction.vout);
         });
         // Add output address
@@ -87,8 +92,8 @@ class Wallet {
     } else {
       throw new InsufficientLitedoge();
     }
+    return false;
   }
 }
 
 export default Wallet;
-

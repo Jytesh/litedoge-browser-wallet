@@ -1,9 +1,13 @@
-import {payments, TransactionBuilder, crypto, script} from 'bitcoinjs-lib';
-import {LitedogeTransaction} from './lDogeTransaction';
-import LitedogeBufferutils from '../utils/bufferUtils';
+/* eslint-disable no-shadow */
+/* eslint-disable max-len */
+/* eslint-disable no-continue */
+/* eslint-disable no-use-before-define */
+import {
+  payments, TransactionBuilder, crypto, script,
+} from 'bitcoinjs-lib';
 import * as bs58check from 'bs58check';
 
-import {multisig} from 'bitcoinjs-lib/src/templates/multisig';
+import { multisig } from 'bitcoinjs-lib/src/templates/multisig';
 import nullData from 'bitcoinjs-lib/src/templates/nulldata';
 import pubKey from 'bitcoinjs-lib/src/templates/pubkey';
 import pubKeyHash from 'bitcoinjs-lib/src/templates/pubkeyhash';
@@ -11,37 +15,34 @@ import scriptHash from 'bitcoinjs-lib/src/templates/scripthash';
 import witnessCommitment from 'bitcoinjs-lib/src/templates/witnesscommitment';
 import witnessPubKeyHash from 'bitcoinjs-lib/src/templates/witnesspubkeyhash';
 import witnessScriptHash from 'bitcoinjs-lib/src/templates/witnessscripthash';
+import LitedogeBufferutils from '../utils/bufferUtils';
+import LitedogeTransaction from './lDogeTransaction';
 
 const Sighash = {
-  SIGHASH_ALL : 1,
-  SIGHASH_NONE : 2,
-  SIGHASH_SINGLE : 3,
-  SIGHASH_ANYONECANPAY : 128,
-}
-
-
-const SCRIPT_TYPES = {
-    P2MS: 'multisig',
-    NONSTANDARD: 'nonstandard',
-    NULLDATA: 'nulldata',
-    P2PK: 'pubkey',
-    P2PKH: 'pubkeyhash',
-    P2SH: 'scripthash',
-    P2WPKH: 'witnesspubkeyhash',
-    P2WSH: 'witnessscripthash',
-    WITNESS_COMMITMENT: 'witnesscommitment',
+  SIGHASH_ALL: 1,
+  SIGHASH_NONE: 2,
+  SIGHASH_SINGLE: 3,
+  SIGHASH_ANYONECANPAY: 128,
 };
 
+const SCRIPT_TYPES = {
+  P2MS: 'multisig',
+  NONSTANDARD: 'nonstandard',
+  NULLDATA: 'nulldata',
+  P2PK: 'pubkey',
+  P2PKH: 'pubkeyhash',
+  P2SH: 'scripthash',
+  P2WPKH: 'witnesspubkeyhash',
+  P2WSH: 'witnessscripthash',
+  WITNESS_COMMITMENT: 'witnesscommitment',
+};
 
 export default class LitedogeBuilder extends TransactionBuilder {
-  network;
-  litedogeTransaction;
-  previousTransactionSet = {};
-  inputs = [];
-
   constructor(network) {
     super(network);
-      this.litedogeTransaction = new LitedogeTransaction();
+    this.litedogeTransaction = new LitedogeTransaction();
+    this.previousTransactionSet = {};
+    this.inputs = [];
   }
 
   setLockTime(locktime) {
@@ -86,17 +87,18 @@ export default class LitedogeBuilder extends TransactionBuilder {
   }
 
   addInputUnsafe(txHash,
-                         vout,
-                         sequence,
-                         prevOutScript,
-                         value,
-                         scriptSig,
-                         inputScript) {
-    const prevTxOut = txHash.toString('hex') + ':' + vout;
+    vout,
+    sequence,
+    prevOutScript,
+    value,
+    scriptSig,
+    inputScript) {
+    const prevTxOut = `${txHash.toString('hex')}:${vout}`;
     if (this.previousTransactionSet[prevTxOut] !== undefined) {
-      throw new Error('Duplicate TxOut: ' + prevTxOut);
+      throw new Error(`Duplicate TxOut: ${prevTxOut}`);
     }
-    let input= {};
+    // eslint-disable-next-line no-shadow
+    let input = {};
     // derive what we can from the scriptSig
     if (inputScript !== undefined) {
       input = this.expandInput(inputScript);
@@ -130,7 +132,7 @@ export default class LitedogeBuilder extends TransactionBuilder {
     return vin;
   }
 
-  expandInput(scriptSig, type, scriptPubKey) {
+  expandInput(scriptSig, type) {
     if (scriptSig.length === 0) {
       return {};
     }
@@ -139,12 +141,14 @@ export default class LitedogeBuilder extends TransactionBuilder {
       if (ssType === SCRIPT_TYPES.NONSTANDARD) {
         ssType = undefined;
       }
+      // eslint-disable-next-line no-param-reassign
       type = ssType;
     }
     // eslint-disable-next-line default-case
     switch (type) {
       case SCRIPT_TYPES.P2PKH: {
-        const {output, pubkey, signature} = payments.p2pkh({
+        // eslint-disable-next-line no-shadow
+        const { output, pubkey, signature } = payments.p2pkh({
           input: scriptSig,
           network: this.network,
         });
@@ -156,7 +160,7 @@ export default class LitedogeBuilder extends TransactionBuilder {
         };
       }
       case SCRIPT_TYPES.P2PK: {
-        const {signature} = payments.p2pk({
+        const { signature } = payments.p2pk({
           input: scriptSig,
           network: this.network,
         });
@@ -179,7 +183,7 @@ export default class LitedogeBuilder extends TransactionBuilder {
     switch (type) {
       case SCRIPT_TYPES.P2PKH: {
         if (!ourPubKey) {
-          return {type};
+          return { type };
         }
         // does our hash160(pubKey) match the output scripts?
         const pkh1 = payments.p2pkh({
@@ -188,7 +192,7 @@ export default class LitedogeBuilder extends TransactionBuilder {
         }).hash;
         const pkh2 = crypto.hash160(ourPubKey);
         if (!pkh1.equals(pkh2)) {
-          return {type};
+          return { type };
         }
         return {
           type,
@@ -208,19 +212,22 @@ export default class LitedogeBuilder extends TransactionBuilder {
         };
       }
     }
-    return {type};
+    return { type };
   }
 
+  // eslint-disable-next-line class-methods-use-this
   trySign({
-                    input,
-                    ourPubKey,
-                    keyPair,
-                    signatureHash,
-                    hashType,
-                    useLowR,
-                  }) {
+    // eslint-disable-next-line no-shadow
+    input,
+    ourPubKey,
+    keyPair,
+    signatureHash,
+    hashType,
+    useLowR,
+  }) {
     // enforce in order signing of public keys
     let signed = false;
+    // eslint-disable-next-line no-shadow
     for (const [i, pubKey] of input.pubkeys.entries()) {
       if (!ourPubKey.equals(pubKey)) {
         continue;
@@ -229,6 +236,7 @@ export default class LitedogeBuilder extends TransactionBuilder {
         throw new Error('Signature already exists');
       }
       const signature = keyPair.sign(signatureHash, useLowR);
+      // eslint-disable-next-line no-param-reassign
       input.signatures[i] = script.signature.encode(signature, hashType);
       signed = true;
     }
@@ -257,22 +265,22 @@ export default class LitedogeBuilder extends TransactionBuilder {
       throw new TypeError('Inconsistent network');
     }
     if (!inputs[vin]) {
-      throw new Error('No input at index: ' + vin);
+      throw new Error(`No input at index: ${vin}`);
     }
     if (needsOutputs(hashType)) {
       throw new Error('Transaction needs outputs');
     }
+    // eslint-disable-next-line no-shadow
     const input = inputs[vin];
     // if redeemScript was previously provided, enforce consistency
     if (
-      input.redeemScript !== undefined &&
-      redeemScript &&
-      !input.redeemScript.equals(redeemScript)
+      input.redeemScript !== undefined
+      && redeemScript
+      && !input.redeemScript.equals(redeemScript)
     ) {
       throw new Error('Inconsistent redeemScript');
     }
-    const ourPubKey =
-      keyPair.publicKey || (keyPair.getPublicKey && keyPair.getPublicKey());
+    const ourPubKey = keyPair.publicKey || (keyPair.getPublicKey && keyPair.getPublicKey());
     if (!this.canSign(input)) {
       if (!this.canSign(input)) {
         const prepared = this.prepareInput(
@@ -284,7 +292,7 @@ export default class LitedogeBuilder extends TransactionBuilder {
         Object.assign(input, prepared);
       }
       if (!this.canSign(input)) {
-        throw Error(input.prevOutType + ' not supported');
+        throw Error(`${input.prevOutType} not supported`);
       }
     }
     // ready to sign
@@ -317,6 +325,7 @@ export default class LitedogeBuilder extends TransactionBuilder {
 
     const tx = this.litedogeTransaction.litedogeClone();
     // create script signatures from inputs
+    // eslint-disable-next-line no-shadow
     this.inputs.forEach((input, i) => {
       if (!input.prevOutType) {
         throw new Error('Transaction is not complete');
@@ -333,6 +342,7 @@ export default class LitedogeBuilder extends TransactionBuilder {
     return tx;
   }
 
+  // eslint-disable-next-line consistent-return, no-shadow
   paymentBuild(type, input) {
     const pubkeys = input.pubkeys || [];
     const signatures = input.signatures || [];
@@ -345,7 +355,7 @@ export default class LitedogeBuilder extends TransactionBuilder {
         if (signatures.length === 0) {
           break;
         }
-        return payments.p2pkh({pubkey: pubkeys[0], signature: signatures[0], network: this.network});
+        return payments.p2pkh({ pubkey: pubkeys[0], signature: signatures[0], network: this.network });
       }
       case SCRIPT_TYPES.P2WPKH: {
         if (pubkeys.length === 0) {
@@ -354,7 +364,7 @@ export default class LitedogeBuilder extends TransactionBuilder {
         if (signatures.length === 0) {
           break;
         }
-        return payments.p2wpkh({pubkey: pubkeys[0], signature: signatures[0], network: this.network});
+        return payments.p2wpkh({ pubkey: pubkeys[0], signature: signatures[0], network: this.network });
       }
       case SCRIPT_TYPES.P2PK: {
         if (pubkeys.length === 0) {
@@ -363,11 +373,12 @@ export default class LitedogeBuilder extends TransactionBuilder {
         if (signatures.length === 0) {
           break;
         }
-        return payments.p2pk({signature: signatures[0], network: this.network});
+        return payments.p2pk({ signature: signatures[0], network: this.network });
       }
       case SCRIPT_TYPES.P2SH: {
         const redeem = this.paymentBuild(input.redeemScriptType, input);
         if (!redeem) {
+          // eslint-disable-next-line consistent-return
           return;
         }
         return payments.p2sh({
@@ -381,19 +392,20 @@ export default class LitedogeBuilder extends TransactionBuilder {
     }
   }
 
+  // eslint-disable-next-line class-methods-use-this
   canSign(input) {
     return (
-      input.signScript !== undefined &&
-      input.signType !== undefined &&
-      input.pubkeys !== undefined &&
-      input.signatures !== undefined &&
-      input.signatures.length === input.pubkeys.length &&
-      input.pubkeys.length > 0
+      input.signScript !== undefined
+      && input.signType !== undefined
+      && input.pubkeys !== undefined
+      && input.signatures !== undefined
+      && input.signatures.length === input.pubkeys.length
+      && input.pubkeys.length > 0
     );
   }
 
-  prepareInput(input, ourPubKey, redeemScript) {
-    const prevOutScript = payments.p2pkh({pubkey: ourPubKey, network: this.network}).output;
+  prepareInput(input, ourPubKey) {
+    const prevOutScript = payments.p2pkh({ pubkey: ourPubKey, network: this.network }).output;
     return {
       prevOutType: SCRIPT_TYPES.P2PKH,
       prevOutScript,
@@ -411,111 +423,113 @@ export default class LitedogeBuilder extends TransactionBuilder {
     // if inputs are being signed with SIGHASH_NONE, we don't strictly need outputs
     // .build() will fail, but .buildIncomplete() is OK
     return (
-      this.litedogeTransaction.outputs.length === 0 &&
-      this.inputs.some(input => {
-        if (!input.signatures) {
-          return false;
-        }
-        return input.signatures.some(signature => {
-          if (!signature) {
-            return false;
-          } // no signature, no issue
-          const hashType = this.signatureHashType(signature);
-          // tslint:disable-next-line:no-bitwise
-          if (hashType & Sighash.SIGHASH_NONE) {
-            return false;
-          } // SIGHASH_NONE doesn't care about outputs
-          return true; // SIGHASH_* does care
-        });
-      })
+      this.litedogeTransaction.outputs.length === 0
+&& this.inputs.some((input) => {
+  if (!input.signatures) {
+    return false;
+  }
+  return input.signatures.some((signature) => {
+    if (!signature) {
+      return false;
+    } // no signature, no issue
+    const hashType = this.signatureHashType(signature);
+    // tslint:disable-next-line:no-bitwise
+    if (hashType & Sighash.SIGHASH_NONE) {
+      return false;
+    } // SIGHASH_NONE doesn't care about outputs
+    return true; // SIGHASH_* does care
+  });
+})
     );
   }
 
+  // eslint-disable-next-line class-methods-use-this
   signatureHashType(buffer) {
     return buffer.readUInt8(buffer.length - 1);
   }
 }
 
 function output(outputScript) {
-    if (witnessPubKeyHash.output.check(outputScript)) {
-      return SCRIPT_TYPES.P2WPKH;
-    }
-    if (witnessScriptHash.output.check(outputScript)) {
-      return SCRIPT_TYPES.P2WSH;
-    }
-    if (pubKeyHash.output.check(outputScript)) {
-      return SCRIPT_TYPES.P2PKH;
-    }
-    if (scriptHash.output.check(outputScript)) {
-      return SCRIPT_TYPES.P2SH;
-    }
-    // XXX: optimization, below functions .decompile before use
-    const chunks = script.decompile(outputScript);
-    if (!chunks) {
-      throw new TypeError('Invalid script');
-    }
-    if (multisig.output.check(chunks)) {
-      return SCRIPT_TYPES.P2MS;
-    }
-    if (pubKey.output.check(chunks)) {
-      return SCRIPT_TYPES.P2PK;
-    }
-    if (witnessCommitment.output.check(chunks)) {
-      return SCRIPT_TYPES.WITNESS_COMMITMENT;
-    }
-    if (nullData.output.check(chunks)) {
-      return SCRIPT_TYPES.NULLDATA;
-    }
-    return SCRIPT_TYPES.NONSTANDARD;
+  if (witnessPubKeyHash.output.check(outputScript)) {
+    return SCRIPT_TYPES.P2WPKH;
+  }
+  if (witnessScriptHash.output.check(outputScript)) {
+    return SCRIPT_TYPES.P2WSH;
+  }
+  if (pubKeyHash.output.check(outputScript)) {
+    return SCRIPT_TYPES.P2PKH;
+  }
+  if (scriptHash.output.check(outputScript)) {
+    return SCRIPT_TYPES.P2SH;
+  }
+  // XXX: optimization, below functions .decompile before use
+  const chunks = script.decompile(outputScript);
+  if (!chunks) {
+    throw new TypeError('Invalid script');
+  }
+  if (multisig.output.check(chunks)) {
+    return SCRIPT_TYPES.P2MS;
+  }
+  if (pubKey.output.check(chunks)) {
+    return SCRIPT_TYPES.P2PK;
+  }
+  if (witnessCommitment.output.check(chunks)) {
+    return SCRIPT_TYPES.WITNESS_COMMITMENT;
+  }
+  if (nullData.output.check(chunks)) {
+    return SCRIPT_TYPES.NULLDATA;
+  }
+  return SCRIPT_TYPES.NONSTANDARD;
 }
-  
+
 function input(inputScript) {
-    // XXX: optimization, below functions .decompile before use
-    const chunks = script.decompile(inputScript);
-    if (!chunks) {
-      throw new TypeError('Invalid script');
-    }
-    if (pubKeyHash.input.check(chunks)) {
-      return SCRIPT_TYPES.P2PKH;
-    }
-    if (scriptHash.input.check(chunks)) {
-      return SCRIPT_TYPES.P2SH;
-    }
-    if (multisig.input.check(chunks)) {
-      return SCRIPT_TYPES.P2MS;
-    }
-    if (pubKey.input.check(chunks)) {
-      return SCRIPT_TYPES.P2PK;
-    }
-    return SCRIPT_TYPES.NONSTANDARD;
+  // XXX: optimization, below functions .decompile before use
+  const chunks = script.decompile(inputScript);
+  if (!chunks) {
+    throw new TypeError('Invalid script');
+  }
+  if (pubKeyHash.input.check(chunks)) {
+    return SCRIPT_TYPES.P2PKH;
+  }
+  if (scriptHash.input.check(chunks)) {
+    return SCRIPT_TYPES.P2SH;
+  }
+  if (multisig.input.check(chunks)) {
+    return SCRIPT_TYPES.P2MS;
+  }
+  if (pubKey.input.check(chunks)) {
+    return SCRIPT_TYPES.P2PK;
+  }
+  return SCRIPT_TYPES.NONSTANDARD;
 }
 
 function toOutputScript(address, network) {
-    let decodeBase58;
-    try {
-        decodeBase58 = fromBase58Check(address);
-    } catch (e) {
+  let decodeBase58;
+  try {
+    decodeBase58 = fromBase58Check(address);
+  } catch (e) {
+    console.error(e);
+  }
+  if (decodeBase58) {
+    if (decodeBase58.version === network.pubKeyHash) {
+      return payments.p2pkh({ hash: decodeBase58.hash }).output;
     }
-    if (decodeBase58) {
-        if (decodeBase58.version === network.pubKeyHash) {
-        return payments.p2pkh({hash: decodeBase58.hash}).output;
-        }
-        if (decodeBase58.version === network.scriptHash) {
-        return payments.p2sh({hash: decodeBase58.hash}).output;
-        }
+    if (decodeBase58.version === network.scriptHash) {
+      return payments.p2sh({ hash: decodeBase58.hash }).output;
     }
-    throw new Error(address + ' has no matching Script');
+  }
+  throw new Error(`${address} has no matching Script`);
 }
 
 function fromBase58Check(address) {
-    const payload = bs58check.decode(address);
-    if (payload.length < 21) {
-        throw new TypeError(address + ' is too short');
-    }
-    if (payload.length > 21) {
-        throw new TypeError(address + ' is too long');
-    }
-    const version = payload.readUInt8(0);
-    const hash = payload.slice(1);
-    return {version, hash};
+  const payload = bs58check.decode(address);
+  if (payload.length < 21) {
+    throw new TypeError(`${address} is too short`);
+  }
+  if (payload.length > 21) {
+    throw new TypeError(`${address} is too long`);
+  }
+  const version = payload.readUInt8(0);
+  const hash = payload.slice(1);
+  return { version, hash };
 }

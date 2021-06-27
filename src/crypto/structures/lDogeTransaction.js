@@ -1,14 +1,14 @@
-import {Transaction, crypto as bcrypto, script} from 'bitcoinjs-lib';
+import { Transaction, crypto as bcrypto, script } from 'bitcoinjs-lib';
 import * as varuint from 'varuint-bitcoin';
 import LitedogeBufferwriter from '../utils/bufferWriter';
 import LitedogeBufferutils from '../utils/bufferUtils';
 
 const Sighash = {
-  SIGHASH_ALL : 1,
-  SIGHASH_NONE : 2,
-  SIGHASH_SINGLE : 3,
-  SIGHASH_ANYONECANPAY : 128,
-}
+  SIGHASH_ALL: 1,
+  SIGHASH_NONE: 2,
+  SIGHASH_SINGLE: 3,
+  SIGHASH_ANYONECANPAY: 128,
+};
 const EMPTY_SCRIPT = Buffer.allocUnsafe(0);
 const ZERO = Buffer.from(
   '0000000000000000000000000000000000000000000000000000000000000000',
@@ -24,18 +24,26 @@ const BLANK_OUTPUT = {
   valueBuffer: VALUE_UINT64_MAX,
 };
 
-export class LitedogeTransaction extends Transaction {
-  inputs = [];
+export default class LitedogeTransaction extends Transaction {
+  /* inputs = [];
   outputs = [];
-  time = 0;
+  time = 0; */
+  constructor(options) {
+    super(options);
+    this.inputs = [];
+    this.outputs = [];
+    this.time = 0;
+  }
 
+  // eslint-disable-next-line class-methods-use-this
   varSliceSize(someScript) {
-    const length = someScript.length;
+    const { length } = someScript;
     return varuint.encodingLength(length) + length;
   }
 
   addInput(hash, index, sequence = LitedogeTransaction.DEFAULT_SEQUENCE, scriptSig) {
     // Add the input and return the input's index
+    console.log('push', this);
     return (
       this.inputs.push({
         hash,
@@ -62,9 +70,7 @@ export class LitedogeTransaction extends Transaction {
     }
     // ignore OP_CODESEPARATOR
     const ourScript = script.compile(
-      script.decompile(prevOutScript).filter(x => {
-        return x !== script.OPS.OP_CODESEPARATOR;
-      }),
+      script.decompile(prevOutScript).filter((x) => x !== script.OPS.OP_CODESEPARATOR),
     );
     const txTmp = this.litedogeClone();
     // SIGHASH_NONE: ignore all outputs? (wildcard payee)
@@ -76,6 +82,7 @@ export class LitedogeTransaction extends Transaction {
         if (i === inIndex) {
           return;
         }
+        // eslint-disable-next-line no-param-reassign
         input.sequence = 0;
       });
       // SIGHASH_SINGLE: ignore all outputs, except at the same index?
@@ -96,6 +103,7 @@ export class LitedogeTransaction extends Transaction {
         if (y === inIndex) {
           return;
         }
+        // eslint-disable-next-line no-param-reassign
         input.sequence = 0;
       });
     }
@@ -107,7 +115,8 @@ export class LitedogeTransaction extends Transaction {
       // SIGHASH_ALL: only ignore input scripts
     } else {
       // "blank" others input scripts
-      txTmp.inputs.forEach(input => {
+      txTmp.inputs.forEach((input) => {
+        // eslint-disable-next-line no-param-reassign
         input.script = EMPTY_SCRIPT;
       });
       txTmp.inputs[inIndex].script = ourScript;
@@ -129,47 +138,46 @@ export class LitedogeTransaction extends Transaction {
     if (!(hashType & Sighash.SIGHASH_ANYONECANPAY)) {
       tbuffer = Buffer.allocUnsafe(36 * this.inputs.length);
       bufferWriter = new LitedogeBufferwriter(tbuffer, 0);
-      this.inputs.forEach(txIn => {
+      this.inputs.forEach((txIn) => {
         bufferWriter.writeSlice(txIn.hash);
         bufferWriter.writeUInt32(txIn.index);
       });
       hashPrevouts = bcrypto.hash256(tbuffer);
     }
     if (
+    // tslint:disable-next-line:no-bitwise
+      !(hashType & Sighash.SIGHASH_ANYONECANPAY)
       // tslint:disable-next-line:no-bitwise
-      !(hashType & Sighash.SIGHASH_ANYONECANPAY) &&
+      && (hashType & 0x1f) !== Sighash.SIGHASH_SINGLE
       // tslint:disable-next-line:no-bitwise
-      (hashType & 0x1f) !== Sighash.SIGHASH_SINGLE &&
-      // tslint:disable-next-line:no-bitwise
-      (hashType & 0x1f) !== Sighash.SIGHASH_NONE
+      && (hashType & 0x1f) !== Sighash.SIGHASH_NONE
     ) {
       tbuffer = Buffer.allocUnsafe(4 * this.inputs.length);
       bufferWriter = new LitedogeBufferwriter(tbuffer, 0);
-      this.inputs.forEach(txIn => {
+      this.inputs.forEach((txIn) => {
         bufferWriter.writeUInt32(txIn.sequence);
       });
       hashSequence = bcrypto.hash256(tbuffer);
     }
     if (
+    // tslint:disable-next-line:no-bitwise
+      (hashType & 0x1f) !== Sighash.SIGHASH_SINGLE
       // tslint:disable-next-line:no-bitwise
-      (hashType & 0x1f) !== Sighash.SIGHASH_SINGLE &&
-      // tslint:disable-next-line:no-bitwise
-      (hashType & 0x1f) !== Sighash.SIGHASH_NONE
+      && (hashType & 0x1f) !== Sighash.SIGHASH_NONE
     ) {
-      const txOutsSize = this.outputs.reduce((sum, output) => {
-        return sum + 8 + this.varSliceSize(output.script);
-      }, 0);
+      // eslint-disable-next-line max-len
+      const txOutsSize = this.outputs.reduce((sum, output) => sum + 8 + this.varSliceSize(output.script), 0);
       tbuffer = Buffer.allocUnsafe(txOutsSize);
       bufferWriter = new LitedogeBufferwriter(tbuffer, 0);
-      this.outputs.forEach(out => {
+      this.outputs.forEach((out) => {
         bufferWriter.writeUInt64(out.value);
         bufferWriter.writeVarSlice(out.script);
       });
       hashOutputs = bcrypto.hash256(tbuffer);
     } else if (
-      // tslint:disable-next-line:no-bitwise
-      (hashType & 0x1f) === Sighash.SIGHASH_SINGLE &&
-      inIndex < this.outputs.length
+    // tslint:disable-next-line:no-bitwise
+      (hashType & 0x1f) === Sighash.SIGHASH_SINGLE
+      && inIndex < this.outputs.length
     ) {
       const output = this.outputs[inIndex];
       tbuffer = Buffer.allocUnsafe(8 + this.varSliceSize(output.script));
@@ -201,20 +209,16 @@ export class LitedogeTransaction extends Transaction {
     newTx.version = this.version;
     newTx.time = this.time;
     newTx.locktime = this.locktime;
-    newTx.inputs = this.inputs.map(txIn => {
-      return {
-        hash: txIn.hash,
-        index: txIn.index,
-        script: txIn.script,
-        sequence: txIn.sequence,
-      };
-    });
-    newTx.outputs = this.outputs.map(txOut => {
-      return {
-        script: txOut.script,
-        value: txOut.value,
-      };
-    });
+    newTx.inputs = this.inputs.map((txIn) => ({
+      hash: txIn.hash,
+      index: txIn.index,
+      script: txIn.script,
+      sequence: txIn.sequence,
+    }));
+    newTx.outputs = this.outputs.map((txOut) => ({
+      script: txOut.script,
+      value: txOut.value,
+    }));
     return newTx;
   }
 
@@ -241,22 +245,19 @@ export class LitedogeTransaction extends Transaction {
 
   byteLength() {
     return (
-      4 + // version
-      4 + // time
-      varuint.encodingLength(this.inputs.length) +
-      varuint.encodingLength(this.outputs.length) +
-      this.inputs.reduce((sum, input) => {
-        return sum + 40 + this.varSliceSize(input.script);
-      }, 0) +
-      this.outputs.reduce((sum, output) => {
-        return sum + 8 + this.varSliceSize(output.script);
-      }, 0) +
-      4 // locktime
+      4 // version
+      + 4 // time
+      + varuint.encodingLength(this.inputs.length)
+      + varuint.encodingLength(this.outputs.length)
+      + this.inputs.reduce((sum, input) => sum + 40 + this.varSliceSize(input.script), 0)
+      + this.outputs.reduce((sum, output) => sum + 8 + this.varSliceSize(output.script), 0)
+      + 4 // locktime
     );
   }
 
   toLitedogeBuffer(buffer, initialOffset) {
     if (!buffer) {
+      // eslint-disable-next-line no-param-reassign
       buffer = Buffer.allocUnsafe(this.byteLength());
     }
     const bufferWriter = new LitedogeBufferwriter(
@@ -267,14 +268,14 @@ export class LitedogeTransaction extends Transaction {
     bufferWriter.writeUInt32(this.version);
     bufferWriter.writeUInt32(this.time);
     bufferWriter.writeVarInt(this.inputs.length);
-    this.inputs.forEach(txIn => {
+    this.inputs.forEach((txIn) => {
       bufferWriter.writeSlice(txIn.hash);
       bufferWriter.writeUInt32(txIn.index);
       bufferWriter.writeVarSlice(txIn.script);
       bufferWriter.writeUInt32(txIn.sequence);
     });
     bufferWriter.writeVarInt(this.outputs.length);
-    this.outputs.forEach(txOut => {
+    this.outputs.forEach((txOut) => {
       if (this.isOutput(txOut)) {
         bufferWriter.writeUInt64(txOut.value);
       } else {
@@ -290,6 +291,7 @@ export class LitedogeTransaction extends Transaction {
     return buffer;
   }
 
+  // eslint-disable-next-line class-methods-use-this
   isOutput(out) {
     return out.value !== undefined;
   }

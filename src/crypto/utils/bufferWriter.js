@@ -1,9 +1,6 @@
 import * as varuint from 'varuint-bitcoin';
 
 export default class LitedogeBufferwriter {
-  buffer;
-  offset;
-
   constructor(buffer, offset = 0) {
     this.buffer = buffer;
     this.offset = offset;
@@ -44,7 +41,7 @@ export default class LitedogeBufferwriter {
 
   writeVector(vector) {
     this.writeVarInt(vector.length);
-    vector.forEach(buf => this.writeVarSlice(buf));
+    vector.forEach((buf) => this.writeVarSlice(buf));
   }
 
   writeUInt64LE(buffer, value, offset) {
@@ -55,6 +52,7 @@ export default class LitedogeBufferwriter {
     return offset + 8;
   }
 
+  // eslint-disable-next-line class-methods-use-this
   verifuint(value, max) {
     if (typeof value !== 'number') {
       throw new Error('cannot write a non-number as a number');

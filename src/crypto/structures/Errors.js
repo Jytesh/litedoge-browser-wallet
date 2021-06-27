@@ -2,5 +2,6 @@ class InsufficientLitedoge extends Error {
 }
 
 export {
-    InsufficientLitedoge
-}
+  // eslint-disable-next-line import/prefer-default-export
+  InsufficientLitedoge,
+};

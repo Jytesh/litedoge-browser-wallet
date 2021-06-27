@@ -11,3 +11,28 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.okay {
+ box-shadow:0 0 10px #76ff31;
+}
+
+.notokay {
+  box-shadow: 0 0 10px #ff4b4b;;
+}
+
+#inputAmount {
+  justify-content: space-between;
+}
+#inputAmount > div {
+  display: flex;
+  flex-flow: column wrap-reverse;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
+
+#inputAmount > div > * {
+  text-align: center;
+}
