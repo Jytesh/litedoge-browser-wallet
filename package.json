@@ -24,6 +24,7 @@
       "react-app"
     ]
   },
+  "homepage": "https://jytesh.github.io/litedoge-browser",
   "browserslist": {
     "production": [
       ">0.2%",
