@@ -24,7 +24,7 @@
       "react-app"
     ]
   },
-  "homepage": "https://jytesh.github.io/litedoge-browser",
+  "homepage": "https://jytesh.github.io/litedoge-browser-wallet",
   "browserslist": {
     "production": [
       ">0.2%",
