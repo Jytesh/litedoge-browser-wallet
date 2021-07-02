@@ -1,0 +1,20 @@
+{
+  "files": {
+    "main.css": "/litedoge-browser/static/css/main.04f5f8ab.chunk.css",
+    "main.js": "/litedoge-browser/static/js/main.ab26c6b4.chunk.js",
+    "main.js.map": "/litedoge-browser/static/js/main.ab26c6b4.chunk.js.map",
+    "runtime-main.js": "/litedoge-browser/static/js/runtime-main.b1e0edbb.js",
+    "runtime-main.js.map": "/litedoge-browser/static/js/runtime-main.b1e0edbb.js.map",
+    "static/js/2.9aa674f7.chunk.js": "/litedoge-browser/static/js/2.9aa674f7.chunk.js",
+    "static/js/2.9aa674f7.chunk.js.map": "/litedoge-browser/static/js/2.9aa674f7.chunk.js.map",
+    "index.html": "/litedoge-browser/index.html",
+    "static/css/main.04f5f8ab.chunk.css.map": "/litedoge-browser/static/css/main.04f5f8ab.chunk.css.map",
+    "static/js/2.9aa674f7.chunk.js.LICENSE.txt": "/litedoge-browser/static/js/2.9aa674f7.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.b1e0edbb.js",
+    "static/js/2.9aa674f7.chunk.js",
+    "static/css/main.04f5f8ab.chunk.css",
+    "static/js/main.ab26c6b4.chunk.js"
+  ]
+}
